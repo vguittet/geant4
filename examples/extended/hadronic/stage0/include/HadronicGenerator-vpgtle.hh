@@ -139,6 +139,8 @@ public:
     // spectator nucleons, and the number of nucleon-nucleon collisions,
     // else, returns a negative value (-999).
 
+    G4String WeightCompute(TH2D* TH2D_GammaZ, TH1D* TH1D_weight, G4double frac);
+
 private:
     G4String fPhysicsCase;
     G4bool fPhysicsCaseIsSupported;

@@ -375,6 +375,8 @@ G4int HadronicGenerator::GenerateInteraction(G4ParticleDefinition* projectileDef
 
     const G4Element* targetElement = targetMaterial->GetElement(0); //
     G4double molarMass = targetElement->GetA() / (g/mole);
+
+  std::cout<<Avogadro/molarMass<<G4endl;
     // G4double density = targetMaterial->GetDensity() / (g/cm3);
     
     // Geometry definition (not strictly needed)
@@ -510,3 +512,23 @@ G4double HadronicGenerator::GetCrossSection(const G4DynamicParticle* part, const
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+G4String HadronicGenerator::WeightCompute(TH2D* TH2D_GammaZ, TH1D* TH1D_weight, G4double frac) {
+    // This method computes the weight of the interaction for ToF computing
+    // and returns a string with the result.
+    // The weight is computed as the ratio of the number of gammas per bin
+    // to the number of collisions per bin.
+    G4String result = "is counted, with a fraction of " + std::to_string(frac);
+    
+    G4int nbBins = TH2D_GammaZ->GetNbinsX();
+    for (G4int i = 1; i <= nbBins; ++i) {
+            // Sum the column at index i
+    G4double columnSum = TH2D_GammaZ->Integral(i, i, 1, TH2D_GammaZ->GetNbinsY());
+    // Store the sum in the TH1D histogram
+    TH1D_weight->SetBinContent(i, TH1D_weight->GetBinContent(i) + frac * columnSum);
+    std::cout << "Column " << i << " sum: " << TH1D_weight->GetBinContent(i) << std::endl;
+    }
+    
+    return result;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

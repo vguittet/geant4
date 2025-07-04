@@ -120,8 +120,9 @@ int main( int , char** ) {
     // Creation des fichier.root
     // Create the ROOT file and histograms
     const TString physlist = namePhysics;
-    TFile* file = new TFile("/home/vguittet/Documents/G4G9/Hadronicgen-physiclist/au_propre/output/stage0.root", "RECREATE");
-    
+    TFile* file = new TFile("/home/vguittet/Documents/G4G9/Hadronicgen-physiclist/stage0/output/rho.root", "RECREATE");
+    const std::vector<G4double> Fraction = {0.65, 0.185, 0.103, 0.03, 0.015, 0.01, 0.002, 0.002, 0.001, 0.001, 0.001};
+    const std::vector<G4String> Body_approx = {"G4_O","G4_C","G4_H","G4_N","G4_Ca","G4_P","G4_K","G4_S","G4_Na","G4_Cl","G4_Mg"};
     // Enable or disable the print out of this program: if enabled, the number of secondaries
     // produced in each collisions is printed out; moreover, once every "printingGap"
     // collisions, the list of secondaries is printed out.
@@ -130,27 +131,27 @@ int main( int , char** ) {
                    //"G4_Ar",
                    //"G4_Be",
                    //"G4_B",
-                   //"G4_Ca",
-                   //"G4_C",
+                   "G4_Ca",
+                   "G4_C",
                    //"G4_Cl",
-                   "G4_Cu",
+                   //"G4_Cu",
                    //"G4_F",
                    //"G4_He",
                    //"G4_H",
                    //"G4_Li",
                    //"G4_Mg",
                    //"G4_Ne",
-						       //"G4_N",
-						       //"G4_O",
-                   //"G4_P",
-                   //"G4_K",
+						       "G4_N",
+						       "G4_O",
+                   "G4_P",
+                   "G4_K",};
                    //"G4_Si",
-                   "G4_Ag",
-						       //"G4_Na",
+                   //"G4_Ag",
+						       //"G4_Na",N
 						       //"G4_S",
-                   "G4_Sn",
+                   //"G4_Sn",
                    //"G4_Ti",
-                  "G4_Zn"};    
+                  //"G4_Zn"};    
 
     G4int humanbodyindex = humanBodyElements.size();  //***LOOKHERE***  GAP IN PRINTING
     G4ParticleDefinition* projectileNucleus = nullptr;
@@ -162,13 +163,18 @@ int main( int , char** ) {
     ions->CreateAllIon();
     ions->CreateAllIsomer();
     
-    G4int protonNbBins = 500;
+    G4int protonNbBins = 250;
     G4double protonMinEnergy = 0; //MeV
     G4double protonMaxEnergy = 200.; //MeV
-    G4int gammaNbBins = 250;
+    G4int gammaNbBins = 100;
     G4double gammaMinEnergy = 0; //MeV
     G4double gammaMaxEnergy = 10; // MeV
  
+    
+    TDirectory* dirw = file->mkdir("standard_Weight");
+    TH1D* TH1D_weight = new TH1D("Weight", "Weight of the interaction for ToF computing;Protons energy [MeV];Weight [mm-1]",
+      protonNbBins, protonMinEnergy, protonMaxEnergy);
+
     // The kinetic energy of the projectile will be sampled randomly, with flat probability
     // in the interval [minEnergy, maxEnergy].
     //***LOOKHERE***  HADRON PROJECTILE MAX Ekin
@@ -182,6 +188,7 @@ int main( int , char** ) {
 
     for (G4int k = 0; k < humanbodyindex; k++) {
       
+      G4String done = "not counting in the approximation";
       G4String nameMaterial = humanBodyElements[k]; 
       G4Material* targetMaterial = G4NistManager::Instance()->FindOrBuildMaterial(nameMaterial);
       if (targetMaterial == nullptr) {
@@ -206,7 +213,8 @@ int main( int , char** ) {
       // Loop over the collisions
             
 
-      G4ParticleDefinition* projectile = partTable->FindParticle("proton");
+      G4ParticleDefinition* projectile = partTable->FindParticle("neutron");
+      //G4ParticleDefinition* projectile = partTable->FindParticle("proton");
       
       // G4DynamicParticle* dynamicProjectile = new G4DynamicParticle(projectile, aDirection, projectileEnergy);
       
@@ -216,11 +224,19 @@ int main( int , char** ) {
       CLHEP::HepRandom::setTheSeed(seed); 
       
       G4int nbPG(0);
-      
+
       nbPG = theHadronicGenerator->GenerateInteraction(projectile, targetMaterial, TH2D_EpEpg, TH1D_SigmaInelastic, TH2D_GammaZ, TH1D_NrPG);
-      
+
+      auto ind = std::find(Body_approx.begin(), Body_approx.end(), nameMaterial);
+      // Check if the element was found
+    if (ind != Body_approx.end()) {
+      // Calculate the index
+      size_t index = std::distance(Body_approx.begin(), ind);
+      done = theHadronicGenerator->WeightCompute(TH2D_GammaZ, TH1D_weight, Fraction[index]);
+  }
+
       G4cout << "nr of PG: " << nbPG << G4endl;
-      
+      G4cout << nameMaterial << " : " << done << G4endl;
       dir->cd();
       TH2D_EpEpg->Write();
       TH1D_SigmaInelastic->Write();
@@ -232,7 +248,10 @@ int main( int , char** ) {
       delete TH1D_SigmaInelastic;
       delete TH1D_NrPG;
     }
-    
+    dirw->cd();
+    TH1D_weight->Write();
+    delete TH1D_weight;
+
     file->Close();
     delete theHadronicGenerator;
     return 0;
