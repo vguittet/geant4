@@ -170,6 +170,13 @@ HadronicGenerator::HadronicGenerator( const G4String physicsCase ) :
   G4NeutronHPCapture* theNeutronHPCapture = new G4NeutronHPCapture;
   G4NeutronHPFission* theNeutronHPFission = new G4NeutronHPFission;
 
+theNeutronHP->SetMinEnergy(0.0);
+theNeutronHP->SetMaxEnergy(20*MeV);
+theNeutronHPCapture->SetMinEnergy(0.0);
+theNeutronHPCapture->SetMaxEnergy(20*MeV);
+theNeutronHPFission->SetMinEnergy(0.0);
+theNeutronHPFission->SetMaxEnergy(20*MeV);
+
   // Model instance with constraint to be above a kinetic energy threshold.
   // (Used for ions in all physics lists)
 
@@ -298,9 +305,9 @@ HadronicGenerator::HadronicGenerator( const G4String physicsCase ) :
   theNeutronInelasticProcess->AddDataSet( theNeutronXSdata );
 
   //specific cross-sections for neutrons in HP model
-  theNeutronHPInelasticProcess->AddDataSet( theNeutronHPXSdatainel );
-  theNeutronCaptureProcess->AddDataSet( theNeutronHPXSdata );
-  theNeutronHPFissionProcess->AddDataSet( theNeutronHPFissionXS );
+  theNeutronInelasticProcess->AddDataSet( theNeutronHPXSdatainel );
+  theNeutronInelasticProcess->AddDataSet( theNeutronHPXSdata );
+  theNeutronInelasticProcess->AddDataSet( theNeutronHPFissionXS );
 
   //cross-sections for ions
   theDeuteronInelasticProcess->AddDataSet( theNuclNuclXSdata );
@@ -322,9 +329,9 @@ HadronicGenerator::HadronicGenerator( const G4String physicsCase ) :
   theNeutronInelasticProcess->RegisterMe( theQGSPmodel );
 
   //processes for HP => low-energy on neutrons 
-  theNeutronHPFissionProcess->RegisterMe( theNeutronHPFission );
-  theNeutronHPInelasticProcess->RegisterMe( theNeutronHP );
-  theNeutronCaptureProcess->RegisterMe(theNeutronHPCapture);
+  theNeutronInelasticProcess->RegisterMe( theNeutronHPFission );
+  theNeutronInelasticProcess->RegisterMe( theNeutronHP );
+  theNeutronInelasticProcess->RegisterMe(theNeutronHPCapture);
     
   //processes for ion (BIC for ions)
   theDeuteronInelasticProcess->RegisterMe( theIonBICmodel );
